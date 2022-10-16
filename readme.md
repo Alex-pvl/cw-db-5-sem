@@ -2,7 +2,6 @@
 
 ## Таблицы и справочники:
 
--   cities(id, name) справочник городов
 -   countries(id, name) справочник стран
 -   customers(id, fullname, type, discount, wallet) таблица покупателей
 -   vendors(id, name, phone, id_city) таблица поставщиков
@@ -15,3 +14,7 @@
 -   operator оператор
 -   user пользователь
 -   admin админ
+
+## Функции:
+
+-
