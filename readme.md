@@ -2,18 +2,18 @@
 
 ## Таблицы и справочники:
 
--   `countries(id, name)` справочник стран
--   `customers(id, fullname, type, discount, wallet)` таблица покупателей
--   `vendors(id, name, phone, id_country)` таблица поставщиков
--   `manufacturers(id, name, id_country)` таблица производителей
--   `equip(id, name, price, id_vendor, id_manufacturer, date_release)` таблица доступного снаряжения
--   `orders(id, id_customer, equip_name, quantity, date_sold)` таблица заказов
+-   `countries(id, name)` - справочник стран
+-   `customers(id, fullname, type, discount, wallet)` - таблица покупателей
+-   `vendors(id, name, phone, id_country)` - таблица поставщиков
+-   `manufacturers(id, name, id_country)` - таблица производителей
+-   `equip(id, name, price, id_vendor, id_manufacturer, date_release)` - таблица доступного снаряжения
+-   `orders(id, id_customer, equip_name, quantity, date_sold)` - таблица заказов
 
 ## Роли:
 
--   `operator` оператор
--   `user` пользователь
--   `admin` админ
+-   `operator` - оператор
+-   `user` - пользователь
+-   `admin` - админ
 
 ## Функции:
 
@@ -31,5 +31,7 @@
 -   `get_by_vendor(varchar)` - найти снаряжение заданного производителя
 -   `get_less_than(numeric)` - найти долю дешевого снаряжения
 -   `get_by_release(date)` - найти снаряжение с заданной датой выпуска
--   `TODO` снаряжение, чья дата продажи находится в заданных пределах для заданного производителя и в целом
+-   `TODO` - снаряжение, чья дата продажи находится в заданных пределах для заданного производителя и в целом
 -   `most_popular()` - самое популярное снаряжение
+-   `by_venndor_with_price(varchar, text)` - найти все снаряжение, поступившее от заданного поставщика, чья стоимость больше, чем средняя стоимость снаряжения, поступившего из заданной страны
+-   `greater_than(numeric), TODO` - найти долю дорогого снаряжения, чья стоимость больше заданной, поступившего от заданного поставщика и в целом

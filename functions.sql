@@ -200,3 +200,45 @@ where o.quantity = (
     );
 end;
 $$ language plpgsql;
+--
+-- найти все снаряжение, поступившее от заданного поставщика, чья стоимость больше, чем средняя стоимость снаряжения, поступившего из заданной страны
+create or replace function by_venndor_with_price(_vendor varchar(255), _country text) returns table (
+        id integer,
+        name text,
+        price numeric,
+        vendor varchar(255)
+    ) as $$
+declare _avg numeric;
+begin
+select AVG(price) into _avg
+from equip e
+    join vendors v on v.id = e.id_vendor
+    join countries c on c.id = v.id_country
+where upper(c.name) = upper(_country);
+return query
+select e.id,
+    e.name,
+    e.price,
+    v.name as vendor
+from equip e
+    join vendors v on v.id = e.id_vendor
+where upper(v.name) = upper(_vendor)
+    and e.price > _avg;
+end;
+$$ language plpgsql;
+--
+-- найти долю дорогого снаряжения, чья стоимость больше заданной, поступившего от заданного поставщика и в целом
+-- от поставщика
+-- в целом
+create or replace function greater_than(_price numeric) returns table (
+        id integer,
+        name text,
+        price numeric
+    ) as $$ begin return query
+select id,
+    name,
+    price
+from equip
+where price > _price;
+end;
+$$ language plpgsql;
