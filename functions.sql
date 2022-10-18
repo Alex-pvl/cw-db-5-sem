@@ -229,6 +229,22 @@ $$ language plpgsql;
 --
 -- найти долю дорогого снаряжения, чья стоимость больше заданной, поступившего от заданного поставщика и в целом
 -- от поставщика
+create or replace function greater_than(_price numeric, _vendor varchar(255)) returns table (
+        id integer,
+        name text,
+        price numeric,
+        vendor varchar(255)
+    ) as $$ begin return query
+select e.id,
+    e.name,
+    e.price,
+    v.name
+from equip e
+    join vendors v on v.id = e.id_vendor
+where e.price > _price
+    and v.name = _vendor;
+end;
+$$ language plpgsql;
 -- в целом
 create or replace function greater_than(_price numeric) returns table (
         id integer,
@@ -240,5 +256,10 @@ select id,
     price
 from equip
 where price > _price;
+end;
+$$ language plpgsql;
+--
+-- найти среднюю стоимость снаряжения, проданного за определенный период времени
+create or replace function avg_price_by_date(_start date, _end date) return numeric as $$ begin
 end;
 $$ language plpgsql;
