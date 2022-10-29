@@ -41,7 +41,7 @@ create or replace function sort_vendor() returns table (
         id integer,
         name text,
         price numeric,
-        vendor text
+        vendor varchar(255)
     ) as $$ begin return query
 select e.id,
     e.name,
@@ -94,10 +94,10 @@ create or replace function max_price() returns table (
         date_release date
     ) as $$ begin return query
 select *
-from equip
-where price = (
-        select MAX(price)
-        from equip
+from equip e
+where e.price = (
+        select MAX(e.price)
+        from equip e
     );
 end;
 $$ language plpgsql;
@@ -111,19 +111,18 @@ create or replace function min_price() returns table (
         date_release date
     ) as $$ begin return query
 select *
-from equip
-where price = (
-        select MIN(price)
-        from equip
+from equip e
+where e.price = (
+        select MIN(e.price)
+        from equip e
     );
 end;
 $$ language plpgsql;
 -- 3) среднюю стоимость
-create or replace function avg_price() returns numeric as $$ begin
-select AVG(price)
-from equip;
-end;
-$$ language plpgsql;
+create or replace function avg_price() returns numeric language sql as $$
+select AVG(e.price)
+from equip e;
+$$;
 --
 -- найти снаряжение в заданных пределах
 create or replace function between_price(min numeric, max numeric) returns table (
@@ -135,8 +134,8 @@ create or replace function between_price(min numeric, max numeric) returns table
         date_release date
     ) as $$ begin return query
 select *
-from equip
-where price between min and max;
+from equip e
+where e.price between min and max;
 end;
 $$ language plpgsql;
 --
@@ -167,8 +166,8 @@ create or replace function get_less_than(_price numeric) returns table (
         date_release date
     ) as $$ begin return query
 select *
-from equip
-where price < _price;
+from equip e
+where e.price < _price;
 end;
 $$ language plpgsql;
 --
@@ -182,8 +181,8 @@ create or replace function get_by_release(_release date) returns table (
         date_release date
     ) as $$ begin return query
 select *
-from equip
-where date_release = _release;
+from equip e
+where e.date_release = _release;
 end;
 $$ language plpgsql;
 --
@@ -224,19 +223,19 @@ end;
 $$ language plpgsql;
 --
 -- самое популярное снаряжение
-create or replace function most_popular() returns text as $$ begin
-select e.name
-from equip e
-    join orders on o.equip_name = e.name
-where o.quantity = (
-        select MAX(quantity)
-        from orders
-    );
+create or replace function most_popular() returns table (name text, quantity bigint) as $$ begin return query
+select e.name,
+    sum(o.quantity) as quantity
+from orders o
+    left join equip e on o.equip_name = e.name
+group by e.name
+order by quantity desc
+limit 1;
 end;
 $$ language plpgsql;
 --
 -- найти все снаряжение, поступившее от заданного поставщика, чья стоимость больше, чем средняя стоимость снаряжения, поступившего из заданной страны
-create or replace function by_venndor_with_price(_vendor varchar(255), _country text) returns table (
+create or replace function by_vendor_with_price(_vendor varchar(255), _country text) returns table (
         id integer,
         name text,
         price numeric,
@@ -244,7 +243,7 @@ create or replace function by_venndor_with_price(_vendor varchar(255), _country 
     ) as $$
 declare _avg numeric;
 begin
-select AVG(price) into _avg
+select AVG(e.price) into _avg
 from equip e
     join vendors v on v.id = e.id_vendor
     join countries c on c.id = v.id_country
@@ -285,30 +284,29 @@ create or replace function greater_than(_price numeric) returns table (
         name text,
         price numeric
     ) as $$ begin return query
-select id,
-    name,
-    price
-from equip
-where price > _price;
+select e.id,
+    e.name,
+    e.price
+from equip e
+where e.price > _price;
 end;
 $$ language plpgsql;
 --
 -- найти среднюю стоимость снаряжения, проданного за определенный период времени
-create or replace function avg_price_by_date(_start date, _end date) returns numeric as $$ begin
+create or replace function avg_price_by_date(_start date, _end date) returns real language sql as $$
 select AVG(e.price)
 from equip e
     join orders o on e.name = o.equip_name
 where o.date_sold >= _start
     and o.date_sold <= _end;
-end;
-$$ language plpgsql;
+$$;
 --
 -- найти снаряжение, чья стоимость выше, чем средняя стоимость снаряжения заданного производителя
-create or replace function price_greater_than_avg_manufac(_manufacturer text) returns table (
+create or replace function price_greater_than_avg_manufac(_manufacturer varchar(255)) returns table (
         id integer,
         name text,
         price numeric,
-        manufacturer text
+        manufacturer varchar(255)
     ) as $$
 declare _avg numeric;
 begin
@@ -323,13 +321,12 @@ select e.id,
     m.name as manufacturer
 from equip e
     join manufacturers m on e.id_manufacturer = m.id
-where e.price > _avg
-    and upper(m.name) = upper(_manufacturer);
+where e.price > _avg;
 end;
 $$ language plpgsql;
 --
 -- определить долю регулярных поставок снаряжения
-TODO --
+--
 -- найти объем продаж снаряжения за:
 --  1) месяц
 --  2) квартал
@@ -339,7 +336,7 @@ TODO --
 --  б) самое дорогое
 --  в) самое дешевое
 create or replace function count_with_price_stats(_period integer) returns table (
-        count integer,
+        count bigint,
         avg_price numeric,
         max_pricce numeric,
         min_price numeric
@@ -350,6 +347,7 @@ select COUNT(e.id) as volume,
     MIN(e.price) as min_price
 from equip e
     join orders o on e.name = o.equip_name
-where now() - o.date_sold <= _period * interval '1 month';
+where now() - o.date_sold <= _period * interval '1 month'
+    and now() - o.date_sold >= '1 days';
 end;
 $$ language plpgsql;

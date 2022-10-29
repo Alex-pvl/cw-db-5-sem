@@ -10,7 +10,7 @@ CREATE TABLE customers(
     id serial PRIMARY KEY,
     fullname varchar(255) NOT NULL,
     type varchar(2) NOT NULL DEFAULT('ФЛ'),
-    discount integer CHECK (discount > 0),
+    discount integer CHECK (discount >= 0),
     wallet numeric CHECK (wallet >= 0)
 );
 -- поставщики
