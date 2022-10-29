@@ -188,6 +188,40 @@ end;
 $$ language plpgsql;
 --
 -- снаряжение, чья дата продажи находится в заданных пределах для заданного производителя и в целом
+-- для поставщика
+create or replace function by_date_and_vendor(_start date, _end date, _vendor varchar(255)) returns table (
+        id integer,
+        name text,
+        date_sold date,
+        vendor varchar(255)
+    ) as $$ begin return query
+select e.id,
+    e.name,
+    o.date_sold,
+    v.name as vendor
+from equip e
+    join orders o on e.name = o.equip_name
+    join vendors v on e.id_vendor = v.id
+where o.date_sold >= _start
+    and o.date_sold <= _end
+    and upper(v.name) = upper(_vendor);
+end;
+$$ language plpgsql;
+-- в целом
+create or replace function by_date(_start date, _end date) returns table (
+        id integer,
+        name text,
+        date_sold date
+    ) as $$ begin return query
+select e.id,
+    e.name,
+    o.date_sold
+from equip e
+    join orders o on e.name = o.equip_name
+where o.date_sold >= _start
+    and o.date_sold <= _end;
+end;
+$$ language plpgsql;
 --
 -- самое популярное снаряжение
 create or replace function most_popular() returns text as $$ begin
@@ -260,6 +294,62 @@ end;
 $$ language plpgsql;
 --
 -- найти среднюю стоимость снаряжения, проданного за определенный период времени
-create or replace function avg_price_by_date(_start date, _end date) return numeric as $$ begin
+create or replace function avg_price_by_date(_start date, _end date) returns numeric as $$ begin
+select AVG(e.price)
+from equip e
+    join orders o on e.name = o.equip_name
+where o.date_sold >= _start
+    and o.date_sold <= _end;
+end;
+$$ language plpgsql;
+--
+-- найти снаряжение, чья стоимость выше, чем средняя стоимость снаряжения заданного производителя
+create or replace function price_greater_than_avg_manufac(_manufacturer text) returns table (
+        id integer,
+        name text,
+        price numeric,
+        manufacturer text
+    ) as $$
+declare _avg numeric;
+begin
+select avg(e.price) into _avg
+from equip e
+    join manufacturers m on e.id_manufacturer = m.id
+where upper(m.name) = upper(_manufacturer);
+return query
+select e.id,
+    e.name,
+    e.price,
+    m.name as manufacturer
+from equip e
+    join manufacturers m on e.id_manufacturer = m.id
+where e.price > _avg
+    and upper(m.name) = upper(_manufacturer);
+end;
+$$ language plpgsql;
+--
+-- определить долю регулярных поставок снаряжения
+TODO --
+-- найти объем продаж снаряжения за:
+--  1) месяц
+--  2) квартал
+--  3) год
+-- за этот же период найти:
+--  а) среднюю стоимость
+--  б) самое дорогое
+--  в) самое дешевое
+create or replace function count_with_price_stats(_period integer) returns table (
+        count integer,
+        avg_price numeric,
+        max_pricce numeric,
+        min_price numeric
+    ) as $$ begin return query
+select COUNT(e.id) as volume,
+    AVG(e.price) as avg_price,
+    MAX(e.price) as max_price,
+    MIN(e.price) as min_price
+from equip e
+    join orders o on e.name = o.equip_name
+where now() - o.date_sold <= _period * interval '1 month';
 end;
 $$ language plpgsql;
