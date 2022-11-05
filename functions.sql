@@ -326,6 +326,18 @@ end;
 $$ language plpgsql;
 --
 -- определить долю регулярных поставок снаряжения
+create or replace function is_regular_delivery() returns table (
+        id integer,
+        name text,
+        regular_delivery boolean
+    ) as $$ begin return query
+select e.id,
+    e.name,
+    e.regular_delivery
+from equip e
+where e.regular_delivery = true;
+end;
+$$ language plpgsql;
 --
 -- найти объем продаж снаряжения за:
 --  1) месяц

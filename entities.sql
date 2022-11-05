@@ -33,7 +33,8 @@ CREATE TABLE equip(
     price numeric CHECK (price > 0),
     id_vendor integer NOT NULL REFERENCES vendors(id),
     id_manufacturer integer NOT NULL REFERENCES manufacturers(id),
-    date_release date NOT NULL
+    date_release date NOT NULL,
+    regular_delivery boolean NOT NULL DEFAULT (false)
 );
 -- заказы
 CREATE TABLE orders(

@@ -18,5 +18,5 @@
 +   `greater_than(numeric, varchar)`
 +   `avg_price_by_date(date, date)`
 +   `price_greater_than_avg_manufac(text)`
--   TODO - определить долю регулярных поставок снаряжения
+-   `is_regular_delivery()` - определить долю регулярных поставок снаряжения
 +   `count_with_price_stats(integer)`
