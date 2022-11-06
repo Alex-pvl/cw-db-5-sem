@@ -366,19 +366,59 @@ $$ language plpgsql;
 --  а) среднюю стоимость
 --  б) самое дорогое
 --  в) самое дешевое
-create or replace function count_with_price_stats(_period integer) returns table (
+create or replace function count_with_price_status(_period integer) returns table (
         count bigint,
-        avg_price numeric,
-        max_pricce numeric,
-        min_price numeric
+        avg_price numeric
     ) as $$ begin return query
 select COUNT(e.id) as volume,
-    AVG(e.price) as avg_price,
-    MAX(e.price) as max_price,
-    MIN(e.price) as min_price
+    AVG(e.price) as avg_price
 from equip e
     join orders o on e.name = o.equip_name
 where now() - o.date_sold <= _period * interval '1 month'
     and now() - o.date_sold >= '1 days';
+end;
+$$ language plpgsql;
+--
+create or replace function equip_with_price_by_period(_period integer, _property text) returns table (
+        id integer,
+        name text,
+        price numeric,
+        date_sold date
+    ) as $$
+declare _max numeric;
+declare _min numeric;
+begin
+select MAX(e.price) into _max
+from equip e
+    join orders o on e.name = o.equip_name
+where now() - o.date_sold <= _period * interval '1 month'
+    and now() - o.date_sold >= '1 days';
+select MIN(e.price) into _min
+from equip e
+    join orders o on e.name = o.equip_name
+where now() - o.date_sold <= _period * interval '1 month'
+    and now() - o.date_sold >= '1 days';
+if (upper(_property) like upper('max')) then return query
+select e.id,
+    e.name,
+    e.price,
+    o.date_sold
+from equip e
+    join orders o on e.name = o.equip_name
+where e.price = _max
+    and now() - o.date_sold <= _period * interval '1 month'
+    and now() - o.date_sold >= '1 days';
+end if;
+if (upper(_property) like upper('min')) then return query
+select e.id,
+    e.name,
+    e.price,
+    o.date_sold
+from equip e
+    join orders o on e.name = o.equip_name
+where e.price = _min
+    and now() - o.date_sold <= _period * interval '1 month'
+    and now() - o.date_sold >= '1 days';
+end if;
 end;
 $$ language plpgsql;
