@@ -188,7 +188,7 @@ $$ language plpgsql;
 --
 -- снаряжение, чья дата продажи находится в заданных пределах для заданного производителя и в целом
 -- для поставщика
-create or replace function by_date_and_vendor(_start date, _end date, _vendor varchar(255)) returns table (
+create or replace function by_date_and_vendor(_interval interval, _vendor varchar(255)) returns table (
         id integer,
         name text,
         date_sold date,
@@ -201,12 +201,31 @@ select e.id,
 from equip e
     join orders o on e.name = o.equip_name
     join vendors v on e.id_vendor = v.id
-where o.date_sold >= _start
-    and o.date_sold <= _end
+where now() - o.date_sold <= _interval
+    and now() - o.date_sold >= '1 days'
     and upper(v.name) = upper(_vendor);
 end;
 $$ language plpgsql;
+--
 -- в целом
+create or replace function by_interval(_interval interval) returns table (
+        id integer,
+        name text,
+        date_sold date,
+        vendor varchar(255)
+    ) as $$ begin return query
+select e.id,
+    e.name,
+    o.date_sold,
+    v.name as vendor
+from equip e
+    join orders o on e.name = o.equip_name
+    join vendors v on e.id_vendor = v.id
+where now() - o.date_sold <= _interval
+    and now() - o.date_sold >= '1 days';
+end;
+$$ language plpgsql;
+-- найти долю снаряжения, проданного за определенный период
 create or replace function by_date(_start date, _end date) returns table (
         id integer,
         name text,
