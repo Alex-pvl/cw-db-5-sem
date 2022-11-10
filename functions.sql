@@ -29,7 +29,8 @@ create or replace function sort_date_release() returns table (
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip
@@ -59,7 +60,8 @@ create or replace function sort_price() returns table (
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip
@@ -71,7 +73,7 @@ create or replace function sort_date_sold() returns table (
         id integer,
         name text,
         price numeric,
-        release date
+        sold date
     ) as $$ begin return query
 select e.id,
     e.name,
@@ -91,7 +93,8 @@ create or replace function max_price() returns table (
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip e
@@ -108,7 +111,8 @@ create or replace function min_price() returns table (
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip e
@@ -131,7 +135,8 @@ create or replace function between_price(min numeric, max numeric) returns table
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip e
@@ -163,7 +168,8 @@ create or replace function get_less_than(_price numeric) returns table (
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip e
@@ -178,7 +184,8 @@ create or replace function get_by_release(_release date) returns table (
         price numeric,
         id_vendor integer,
         id_manufacturer integer,
-        date_release date
+        date_release date,
+        regular_delivery boolean
     ) as $$ begin return query
 select *
 from equip e
@@ -187,23 +194,23 @@ end;
 $$ language plpgsql;
 --
 -- снаряжение, чья дата продажи находится в заданных пределах для заданного производителя и в целом
--- для поставщика
-create or replace function by_date_and_vendor(_interval interval, _vendor varchar(255)) returns table (
+-- для производителя
+create or replace function by_date_and_manuf(_interval interval, _manuf varchar(255)) returns table (
         id integer,
         name text,
         date_sold date,
-        vendor varchar(255)
+        manufacturer varchar(255)
     ) as $$ begin return query
 select e.id,
     e.name,
     o.date_sold,
-    v.name as vendor
+    m.name as manufacturer
 from equip e
     join orders o on e.name = o.equip_name
-    join vendors v on e.id_vendor = v.id
+    join manufacturers m on e.id_manufacturer = m.id
 where now() - o.date_sold <= _interval
     and now() - o.date_sold >= '1 days'
-    and upper(v.name) = upper(_vendor);
+    and upper(m.name) = upper(_manuf);
 end;
 $$ language plpgsql;
 --
@@ -294,7 +301,7 @@ select e.id,
 from equip e
     join vendors v on v.id = e.id_vendor
 where e.price > _price
-    and v.name = _vendor;
+    and upper(v.name) = upper(_vendor);
 end;
 $$ language plpgsql;
 -- в целом

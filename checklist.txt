@@ -12,7 +12,7 @@
 +   get_by_release(date) 
 +   by_date(date, date)
 +   by_interval(interval)
-+   by_date_and_vendor(interval, vendor) 
++   by_date_and_manuf(interval, vendor) 
 +   most_popular() 
 +   by_vendor_with_price(varchar, text) 
 +   greater_than(numeric) 
