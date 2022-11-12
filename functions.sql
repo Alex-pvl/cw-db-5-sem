@@ -264,6 +264,7 @@ $$ language plpgsql;
 create or replace function by_vendor_with_price(_vendor varchar(255), _country text) returns table (
         id integer,
         name text,
+        avg_price numeric,
         price numeric,
         vendor varchar(255)
     ) as $$
@@ -277,6 +278,7 @@ where upper(c.name) = upper(_country);
 return query
 select e.id,
     e.name,
+    round(_avg, 2),
     e.price,
     v.name as vendor
 from equip e
@@ -331,6 +333,7 @@ $$;
 create or replace function price_greater_than_avg_manufac(_manufacturer varchar(255)) returns table (
         id integer,
         name text,
+        avg_price numeric,
         price numeric,
         manufacturer varchar(255)
     ) as $$
@@ -343,10 +346,12 @@ where upper(m.name) = upper(_manufacturer);
 return query
 select e.id,
     e.name,
+    round(_avg, 2),
     e.price,
     m.name as manufacturer
 from equip e
     join manufacturers m on e.id_manufacturer = m.id
+    left join _avg;
 where e.price > _avg;
 end;
 $$ language plpgsql;
